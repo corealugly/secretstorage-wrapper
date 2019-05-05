@@ -5,16 +5,16 @@ from pprint import pprint
 import argparse
 import json
 import sys
-
+import logging
 
 class create_connection():
   def __enter__(self) -> DBusConnection:
-    print("open sock!")
+    logging.info("open sock")
     self.connection = secretstorage.dbus_init()
     return self.connection
 
   def __exit__(self, exc_type, exc_value, traceback): # type: ignore
-    print("close sock!")
+    logging.info("close sock")
     self.connection.sock.close()
 
 def add(args):
@@ -24,7 +24,7 @@ def add(args):
     with create_connection() as conn:
       collection = secretstorage.get_default_collection(conn)
       if (collection.is_locked()):
-        print("base locked:" + str(collection.is_locked()))
+        logging.info("base locked:" + str(collection.is_locked()))
         collection.unlock()
 
       item = collection.create_item(args.app_name, attributes, args.password)
@@ -36,7 +36,7 @@ def get(args):
     with create_connection() as conn:
       collection = secretstorage.get_default_collection(conn)
       if (collection.is_locked()):
-        print("base locked:" + str(collection.is_locked()))
+        logging.info("base locked:" + str(collection.is_locked()))
         collection.unlock()
 
       items = collection.search_items(attributes)
@@ -53,7 +53,7 @@ def remove(args):
     with create_connection() as conn:
       collection = secretstorage.get_default_collection(conn)
       if (collection.is_locked()):
-        print("base locked:" + str(collection.is_locked()))
+        logging.info("base locked:" + str(collection.is_locked()))
         collection.unlock()
 
       items = [ item for item in collection.search_items(attributes) ]
@@ -61,10 +61,12 @@ def remove(args):
           items[0].delete()
           return True
       if len(items) > 1:
-          print("ERROR: many matches found")
+          #print("ERROR: many matches found")
+          logging.error("many matches found")
           return False
       if len(items) < 1:
-          print("ERROR: not matches found")
+          #print("ERROR: not matches found")
+          logging.error("not matches found")
           return False
 
 def main():
@@ -122,4 +124,5 @@ def main():
 #    collection.lock()
  
 if __name__ == "__main__":
+  logging.basicConfig(level=logging.INFO)
   main()
