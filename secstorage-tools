@@ -32,20 +32,22 @@ def add(args):
 
 def get(args):
     attributes = json.loads(args.attributes)
-    pprint(attributes)
     with create_connection() as conn:
       collection = secretstorage.get_default_collection(conn)
       if (collection.is_locked()):
         logging.info("base locked:" + str(collection.is_locked()))
         collection.unlock()
 
-      items = collection.search_items(attributes)
-      for item in items:
-        print("----------------")
-        print("label: " + item.get_label())
-        pprint(item.get_attributes())
-        print("secret: " + item.get_secret().decode('utf-8'))
-      return True
+      items = [ item for item in collection.search_items(attributes) ]
+      #if len(items) == 1 and args.type == "json":
+      if args.type == "json":
+          #ret = [ json.dumps({ 
+          ret = [ { 'label': item.get_label(),
+                    'attributes': item.get_attributes(),
+                    'secret': item.get_secret().decode('utf-8')
+                  } for item in items ]
+          print(json.dumps(ret))
+          return True
 
 def remove(args):
     attributes = json.loads(args.attributes)
@@ -83,6 +85,7 @@ def main():
 
   parser_get = subparsers.add_parser('get', help='get help')
   parser_get.add_argument( '-att', '--attributes', type=str, help='attributes as json', required=True)
+  parser_get.add_argument( '-type', choices=('json'), help='type for return value', default='json', required=False)
   #parser_add.add_argument('-c', '--collection', type=str, help='collection name', required=False)
   parser_get.set_defaults(func=get)
 
@@ -124,5 +127,6 @@ def main():
 #    collection.lock()
  
 if __name__ == "__main__":
-  logging.basicConfig(level=logging.INFO)
+  #logging.basicConfig(level=logging.INFO)
+  #logging.basicConfig(filename='/tmp/secretstorage.log', filemode='w', level=logging.INFO)
   main()
