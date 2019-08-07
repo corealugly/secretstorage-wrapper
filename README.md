@@ -1,26 +1,26 @@
 ##### Add new password
 ```
-./secstorage-tools add -a api -p test_password -att '{"test":"1", "test2":"123"}' | jq 
+$ secstorage add -n api -p test_password -a '{"test":"1", "test2":"123"}'
 ```
 
 ##### Get passwords using attributes
 ```
-./secstorage-tools get -att '{"test":"1", "test2":"123"}' | jq 
+$ secstorage get -a '{"test":"1", "test2":"123"}' -v | jq
 ```
 
 ##### Get passwords using name
 ```
-./secstorage-tools get -att '{}' -a api2 | jq
+$ secstorage get -n 'api' -a '{}' -v | jq
 ```
 
 ##### Get all passwords using name
 ```
-./secstorage-tools get -att '{}' | jq
+$ secstorage get -a '{}' | jq
 ```
 
 ##### Remove ONE password 
 ```
-./secstorage-tools remove -att '{"test":"1", "test2":"123"}' | jq
+$ secstorage remove -a '{"test":"1", "test2":"123"}' | jq
 ```
 > if there is more than one password, then the NAMES and ATTRIBUTES are displayed
 

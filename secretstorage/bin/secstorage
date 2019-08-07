@@ -44,7 +44,7 @@ def add(args):
       #  collection.unlock()
 
       with open_colletion(collection):
-        item = collection.create_item(args.app_name, attributes, args.password)
+        collection.create_item(args.app_name, attributes, args.password)
 
 def get(args):
     attributes = json.loads(args.attributes)
@@ -59,11 +59,21 @@ def get(args):
         else:
           items = [ item for item in collection.search_items(attributes) ]
         if args.type == "json":
-            ret = [ { 'label': item.get_label(),
-                      'attributes': item.get_attributes(),
-                      'secret': item.get_secret().decode('utf-8')
-                    } for item in items ]
-            print(json.dumps(ret))
+          ret = [ { 'label': item.get_label(),
+                    'attributes': item.get_attributes(),
+                    'secret': '*****'
+                  } if args.verbose
+                  else  { 'label': item.get_label(),
+                          'attributes': item.get_attributes(),
+                          'secret': item.get_secret().decode('utf-8')
+                        }  for item in items ]
+          print(json.dumps(ret))
+        if args.type == "password":
+          if len(items) == 1:
+            print(items[0].get_secret().decode('utf-8'))
+          else:
+            #logging.error("many matches found")
+            print("Error: many matches found")
 
 def remove(args):
     attributes = json.loads(args.attributes)
@@ -90,7 +100,8 @@ def remove(args):
                     item.delete()
                 return
             ret = [ { 'label': item.get_label(),
-                      'attributes': item.get_attributes()
+                      'attributes': item.get_attributes(),
+                      'secret': '*****'
                     } for item in items ]
             print(json.dumps(ret))
         if len(items) == 0:
@@ -118,31 +129,32 @@ def main():
   subparsers = parser.add_subparsers()
 
   parser_add = subparsers.add_parser('add', help='add help')
-  parser_add.add_argument('-a', '--app_name',type=str, help='app name', required=True)
+  parser_add.add_argument('-n', '--app_name',type=str, help='app name', required=True)
   parser_add.add_argument('-p', '--password', type=str, help='password', required=True)
-  parser_add.add_argument('-att', '--attributes', type=str, help='attributes as json', required=True)
+  parser_add.add_argument('-a', '--attributes', type=str, help='attributes as json', required=True)
   #parser_add.add_argument('-c', '--collection', type=str, help='collection name', required=False)
   parser_add.set_defaults(func=add)
 
   parser_get = subparsers.add_parser('get', help='get help')
-  parser_get.add_argument('-att', '--attributes', type=str, help='attributes as json', required=True)
-  parser_get.add_argument('-type', choices=('json',), help='type for return value', default='json', required=False)
-  parser_get.add_argument('-a', '--app_name',type=str, help='app name', required=False)
+  parser_get.add_argument('-a', '--attributes', type=str, help='attributes as json', required=True)
+  parser_get.add_argument('-t', '--type', choices=('json', "password",), help='type for return value', default='json', required=False)
+  parser_get.add_argument('-n', '--app_name',type=str, help='app name', required=False)
+  parser_get.add_argument('-v', '--verbose', help='verbose password', action='store_false', required=False)
+  #parser_get.add_argument('--all', help='get all find password', action='store_false', required=False)
   #parser_add.add_argument('-c', '--collection', type=str, help='collection name', required=False)
   parser_get.set_defaults(func=get)
 
   parser_remove = subparsers.add_parser('remove', help='remove help')
-  parser_remove.add_argument('-att', '--attributes', type=str, help='attributes as json', required=True)
-  parser_remove.add_argument('-a', '--app_name',type=str, help='app name', required=False)
-  #parser_remove.add_argument('--remove_all', help='remove all find password', action='store_false', required=False)
-  parser_remove.add_argument('--remove_all', help='remove all find password', action='store_true', required=False)
+  parser_remove.add_argument('-a', '--attributes', type=str, help='attributes as json', required=True)
+  parser_remove.add_argument('-n', '--app_name',type=str, help='app name', required=False)
+  parser_remove.add_argument('--remove_all', help='remove all find password', action='store_false', required=False)
   #parser_add.add_argument('-c', '--collection', type=str, help='collection name', required=False)
   parser_remove.set_defaults(func=remove)
 
   parser_remove = subparsers.add_parser('collection', help='remove help')
   parser_remove.add_argument('-l', '--list', help='get list of collections', action='store_true', required=False)
   parser_remove.add_argument('-r', '--rename', type=str, help='rename collection', required=False)
-  parser_remove.add_argument('-n', '--name', type=str, help='rename collection', required=False)
+  parser_remove.add_argument('-n', '--name', type=str, help='select collection', required=False)
   parser_remove.set_defaults(func=collection)
 
   args = parser.parse_args()
